@@ -1,10 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 function WithdrawModal({ isOpen, onClose, amount, onWithdraw }) {
+  
+  const [localAmount, setLocalAmount] = useState(amount);
+  
+  useEffect(() => {
+    setLocalAmount(amount);
+  }, [amount]);
+  
   if (!isOpen) return null;
-  const platformWalletAddress = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
-  const solanaUrl = `solana:${platformWalletAddress}?amount=${amount}&spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&reference=deposit`;
+  
+  const platformWalletAddress = import.meta.env.VITE_PLATFORM_WALLET_ADDRESS;
+  const solanaUrl = `solana:${platformWalletAddress}?amount=${localAmount}&spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&reference=deposit`;
   
   return (
     <div className="modal" id="withdrawModal" onClick={(e) => e.target.id === 'withdrawModal' && onClose()}>
@@ -23,13 +31,13 @@ function WithdrawModal({ isOpen, onClose, amount, onWithdraw }) {
                 {platformWalletAddress.slice(0, 8)}...{platformWalletAddress.slice(-8)}
               </div>
               <div className="qr-amount">
-                Withdraw <span id="withdrawAmount">{amount.toFixed(2)}</span> USDC<br /><br />
+                Amount: <input type="number" id="withdrawAmount" className="stake-input" value={localAmount} onChange={(e) => setLocalAmount(e.target.value)} min="5" step="0.1" /> USDC<br /><br />
               </div>
               
             </div>
           </div>
         </div>
-        <button className="close-modal" id="confirmWithdraw" onClick={onWithdraw}>Withdraw</button>
+        <button className="close-modal" id="confirmWithdraw" onClick={() =>onWithdraw(localAmount)}>Withdraw</button>
         <button className="close-modal" id="closeWithdraw" onClick={onClose}>
           Close
         </button>

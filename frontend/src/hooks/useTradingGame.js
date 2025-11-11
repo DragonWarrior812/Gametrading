@@ -15,12 +15,12 @@ const TIMEFRAMES = {
 };
 
 export function useTradingGame() {
-  const [balance, setBalance] = useState(42.3);
+  const [balance, setBalance] = useState(0);
   const [stake, setStake] = useState(5);
   const [currentMarket, setCurrentMarket] = useState("ETH");
   const [currentTimeframe, setCurrentTimeframe] = useState("10s");
   const [currentPrice, setCurrentPrice] = useState(2500.0);
-  const [playerCount, setPlayerCount] = useState(12);
+  const [playerCount, setPlayerCount] = useState(0);
   const [allBoxes, setAllBoxes] = useState([]);
   const [midLineY, setMidLineY] = useState(200);
   const [scaleCenterPrice, setScaleCenterPrice] = useState(2500.0);
@@ -35,6 +35,7 @@ export function useTradingGame() {
   const lastScaleUpdateRef = useRef(0);
   const displayedPriceRef = useRef(2500.0);
   const priceScaleInnerRef = useRef(null);
+  const toastIdCounterRef = useRef(0);
 
   const getPricePerPixel = useCallback((market = currentMarket) => {
     const zooms = {
@@ -99,7 +100,14 @@ export function useTradingGame() {
   }, [currentMarket, currentPrice]);
 
   const showToast = useCallback((title, amount, isWin) => {
-    const toast = { id: Date.now(), title, amount, isWin };
+    // Generate unique ID using counter + timestamp + random to avoid duplicates
+    toastIdCounterRef.current += 1;
+    const toast = { 
+      id: `toast-${Date.now()}-${toastIdCounterRef.current}-${Math.random().toString(36).substr(2, 9)}`, 
+      title, 
+      amount, 
+      isWin 
+    };
     setToasts((prev) => {
       const newToasts = [...prev, toast];
       return newToasts.slice(-3);
@@ -115,6 +123,10 @@ export function useTradingGame() {
 
   const placeBet = useCallback((x, y, side) => {
     const timeframeInSeconds = TIMEFRAMES[currentTimeframe] || 60;
+    if(balance - stake < 0){
+      showToast("BALANCE_LOW", "Balance is low", false);
+      return;
+    }
     const now = Date.now();
     const box = {
       id: Date.now() + Math.random(),
@@ -185,7 +197,6 @@ export function useTradingGame() {
     const inner = priceScaleInnerRef.current;
     if (!inner) return;
     inner.innerHTML = "";
-
     const stepPx = 40;
     const stepPrice = stepPx / pixelsPerPrice;
     const ticksEachSide = Math.ceil(400 / stepPx) + 2;
@@ -250,42 +261,10 @@ export function useTradingGame() {
       displayedPriceRef.current += diff * 0.2;
     }, 50);
 
-    setInterval(() => {
-      setPlayerCount((prev) => Math.max(1, prev + Math.floor(Math.random() * 3) - 1));
-    }, 2000);
+    // setInterval(() => {
+    //   setPlayerCount((prev) => Math.max(1, prev + Math.floor(Math.random() * 3) - 1));
+    // }, 2000);
   }, [currentMarket, currentPrice, fetchRealPrice]);
-
-  const initializePlayers = useCallback(() => {
-    const names = [
-      "Crypto King", "Moon Walker", "Diamond Hands", "Whale Hunter",
-      "Degen Trader", "Bull Master", "Bear Slayer", "Profit Ninja",
-      "Leverage Lord", "Chart Wizard", "Pump Chaser", "Bag Holder",
-      "HODL Hero", "Swing Master", "Day Trader", "Scalp God",
-    ];
-
-    const avatars = [
-      { emoji: "🚀", bg: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
-      { emoji: "💎", bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
-      { emoji: "🐋", bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
-      { emoji: "🔥", bg: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)" },
-      { emoji: "⚡", bg: "linear-gradient(135deg, #30cfd0 0%, #330867 100%)" },
-      { emoji: "🎯", bg: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)" },
-      { emoji: "👑", bg: "linear-gradient(135deg, #ffd89b 0%, #19547b 100%)" },
-      { emoji: "🦅", bg: "linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)" },
-      { emoji: "🌟", bg: "linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)" },
-      { emoji: "💰", bg: "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)" },
-    ];
-
-    const initialPlayers = [];
-    for (let i = 0; i < 10; i++) {
-      const name = names[Math.floor(Math.random() * names.length)];
-      const avatar = avatars[Math.floor(Math.random() * avatars.length)];
-      const winRate = Math.floor(Math.random() * 60) + 30;
-      const joinTime = new Date(Date.now() - Math.random() * 3600000);
-      initialPlayers.push({ id: Date.now() + i, name, avatar, winRate, joinTime });
-    }
-    setPlayers(initialPlayers);
-  }, []);
 
   const renderPlayers = useCallback(() => {
     // Players are managed by state, rendering happens in component
@@ -361,6 +340,7 @@ export function useTradingGame() {
     setCurrentMarket: handleMarketChange,
     setCurrentTimeframe,
     setBalance,
+    setPlayerCount,
     showToast,
     showDepositModal: () => {},
     showWithdrawModal: () => {},
@@ -373,7 +353,7 @@ export function useTradingGame() {
     drawTicks,
     fetchRealPrice,
     startMockUpdates,
-    initializePlayers,
+    //initializePlayers,
     renderPlayers,
   };
 }

@@ -32,23 +32,6 @@ function Leaderboard({ players }) {
             </div>
           </div>
         ))}
-        {/* Duplicate for infinite scroll */}
-        {players.map((player) => (
-          <div key={`dup-${player.id}`} className="player-item">
-            <div className="player-avatar" style={{ background: player.avatar.bg }}>
-              {player.avatar.emoji}
-            </div>
-            <div className="player-info-text">
-              <div className="player-name">{player.name}</div>
-              <div className="player-stats">
-                <span className="player-time">{formatTime(player.joinTime)}</span>
-                <span className={`player-winrate ${getWinRateClass(player.winRate)}`}>
-                  {player.winRate}% W
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );
