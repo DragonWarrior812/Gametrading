@@ -1,6 +1,6 @@
 import React from 'react';
 
-function HUD({ balance, stake, currentMarket, currentTimeframe, onStakeChange, onMarketChange, onTimeframeChange, onDepositClick, onConnectWalletClick, onWithdrawClick }) {
+function HUD({ balance, stake, currentMarket, currentTimeframe, walletAddress, onStakeChange, onMarketChange, onTimeframeChange, onDepositClick, onConnectWalletClick, onDisConnectWalletClick, onWithdrawClick }) {
 
   return (
     <div className="hud">
@@ -56,9 +56,15 @@ function HUD({ balance, stake, currentMarket, currentTimeframe, onStakeChange, o
       </div>
 
       <div className="hud-buttons-right">
-        <button className="hud-button right-connect" id="connectWalletBtn" onClick={onConnectWalletClick}>
-          💎 Connect Wallet
-        </button>
+        {walletAddress ? (
+          <button className="hud-button right-connect" id="connectWalletBtn" onClick={onDisConnectWalletClick}>
+            💎 {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
+          </button>
+          ) : (
+            <button className="hud-button right-connect" id="connectWalletBtn" onClick={onConnectWalletClick}>
+              💎 Connect Wallet
+            </button>
+          )}
         <button className="hud-button right" id="depositBtn" onClick={onDepositClick}>
           💰 Deposit
         </button>

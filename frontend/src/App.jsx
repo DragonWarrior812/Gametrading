@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import LaunchScreen from './components/LaunchScreen';
 import GameApp from './components/GameApp';
-// import WalletContextProvider from './context/WalletContext';
-// import ContractContextProvider from './context/ContractContext';
- import { TradingGameProvider } from './context/TradingGameContext';
+import WalletContextProvider from './context/WalletContext';
+import ContractContextProvider from './context/ContractContext';
+import { TradingGameProvider } from './context/TradingGameContext';
 
 function App() {
   const [launched, setLaunched] = useState(false);
@@ -33,8 +33,8 @@ function App() {
 
   return (
     <>
-      {/* <WalletContextProvider>
-        <ContractContextProvider> */}
+      <WalletContextProvider>
+        <ContractContextProvider>
           <TradingGameProvider>
             <div id="app">
               {!launched ? (
@@ -44,8 +44,8 @@ function App() {
               )}
             </div>
           </TradingGameProvider>
-        {/* </ContractContextProvider>
-      </WalletContextProvider> */}
+        </ContractContextProvider>
+      </WalletContextProvider>
     </>
     
   );

@@ -3,6 +3,10 @@ const cors = require('cors');
 const WebSocket = require('ws');
 const http = require('http');
 const https = require('https');
+const mongoose = require('mongoose');
+const Wallet = require('./models/Wallet');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -11,26 +15,36 @@ const wss = new WebSocket.Server({ server });
 app.use(cors());
 app.use(express.json());
 
+// MongoDB connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/gametrading';
+
+mongoose.connect(MONGODB_URI)
+.then(() => {
+  console.log('✅ Connected to MongoDB');
+})
+.catch((error) => {
+});
+
 // In-memory storage
 const balances = new Map();
 let currentPrice = 2500.00;
 let connectedClients = 0;
-
+let players = [];
 // Mock price updates
-setInterval(() => {
-    currentPrice += (Math.random() - 0.5) * 10;
+// setInterval(() => {
+//     currentPrice += (Math.random() - 0.5) * 10;
     
-    // Broadcast price to all connected WebSocket clients
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-                type: 'price',
-                price: currentPrice,
-                slot: Date.now()
-            }));
-        }
-    });
-}, 400);
+//     // Broadcast price to all connected WebSocket clients
+//     wss.clients.forEach(client => {
+//         if (client.readyState === WebSocket.OPEN) {
+//             client.send(JSON.stringify({
+//                 type: 'price',
+//                 price: currentPrice,
+//                 slot: Date.now()
+//             }));
+//         }
+//     });
+// }, 400);
 
 // Broadcast player count
 setInterval(() => {
@@ -40,7 +54,8 @@ setInterval(() => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
                 type: 'count',
-                players: connectedClients
+                players_count: connectedClients,
+                players: players
             }));
         }
     });
@@ -49,6 +64,28 @@ setInterval(() => {
 // WebSocket connection handling
 wss.on('connection', (ws) => {
     console.log('Client connected');
+    
+    ws.on('message', (message) => {
+        try {
+            const data = JSON.parse(message);
+            
+            if (data.type === 'connect' && data.walletAddress) {
+                const walletAddress = data.walletAddress;
+                const playerExists = players.some(player => player.name === walletAddress);
+                
+                if (!playerExists) {
+                    players.push({
+                        id: Date.now(),
+                        name: walletAddress,
+                        winRate: 0,
+                        joinTime: Date.now()
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+        }
+    });
     
     ws.on('close', () => {
         console.log('Client disconnected');

@@ -10,6 +10,9 @@ import FABMenu from './FABMenu';
 import { TradingGameContext } from '../context/TradingGameContext';
 import { Connection, PublicKey, clusterApiUrl, LAMPORTS_PER_SOL, Transaction, SystemProgram } from "@solana/web3.js";
 
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletSelectionModal } from '../components/WalletSelectionModal';
+
 function GameApp() {
   const {
     balance,
@@ -40,6 +43,8 @@ function GameApp() {
   const [walletAddress, setWalletAddress] = useState(null);
   const [players, setPlayers] = useState([]);
   const [initialPlayers, setInitialPlayers] = useState([]);
+  const wallet = useWallet();
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   const wsRef = useRef(null); // Store WebSocket reference
   
@@ -85,20 +90,21 @@ function GameApp() {
     return null;
   };
 
-  const connectWallet = async () => {
-    const provider = getProvider();
-    if(!provider) return;
+  const connectWallet = () => {
+    setShowWalletModal(true);
+    // const provider = getProvider();
+    // if(!provider) return;
     
-    try{
-      const response = await provider.connect();
-      const walletAddress = response.publicKey.toString();
-      console.log("✅ Connected with wallet address:", walletAddress);
-      setWalletAddress(walletAddress);
+    // try{
+    //   const response = await provider.connect();
+    //   const walletAddress = response.publicKey.toString();
+    //   console.log("✅ Connected with wallet address:", walletAddress);
+    //   setWalletAddress(walletAddress);
       
-      return walletAddress;
-    } catch (error) {
-      console.error("Error connecting to wallet", error);
-    }
+    //   return walletAddress;
+    // } catch (error) {
+    //   console.error("Error connecting to wallet", error);
+    // }
   };
 
 
@@ -194,6 +200,13 @@ function GameApp() {
       }
     }
   };
+  
+  const handleDisconnect = () => {
+    setWalletAddress(null);
+    setShowWalletModal(false);
+    wallet.disconnect();
+    console.log("✅ Wallet disconnected");
+  };
 
   // WebSocket connection setup
   useEffect(() => {
@@ -252,6 +265,16 @@ function GameApp() {
     }
   }, [walletAddress]); // Run when walletAddress changes
   
+  useEffect(() => {
+    if (wallet.connected && wallet.publicKey) {
+      const address = wallet.publicKey.toString();
+      setWalletAddress(address);
+      console.log("✅ Wallet connected:", address);
+    } else {
+      setWalletAddress(null);
+    }
+  }, [wallet.connected, wallet.publicKey]);
+
   // Initialize game state when market changes: restart price updates and reinitialize players
   useEffect(() => {
     startMockUpdates();
@@ -266,11 +289,13 @@ function GameApp() {
         stake={stake}
         currentMarket={currentMarket}
         currentTimeframe={currentTimeframe}
+        walletAddress={walletAddress}
         onStakeChange={setStake}
         onMarketChange={setCurrentMarket}
         onTimeframeChange={setCurrentTimeframe}
         onDepositClick={() => setDepositModalOpen(true)}
-        onConnectWalletClick={() => connectWallet()}
+        onConnectWalletClick={() => setShowWalletModal(true)}
+        onDisConnectWalletClick={() => handleDisconnect()}
         onWithdrawClick={() => setWithdrawModalOpen(true)}
       />
       <PlayerInfo balance={balance} playerCount={playerCount} />
@@ -305,6 +330,10 @@ function GameApp() {
         onWithdraw={(amount) => withdrawSol(amount)}
       />
       <ToastContainer />
+      <WalletSelectionModal
+        isOpen={showWalletModal}
+        onClose={() => setShowWalletModal(false)}
+      />
     </div>
   );
 }
